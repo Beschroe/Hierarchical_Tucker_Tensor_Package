@@ -1,5 +1,5 @@
 import torch
-from .dimtree.dimtree import dimtree
+from dimtree.dimtree import dimtree
 def check_U(U):
         """
         Prueft, ob U fuer sich genommen ein gueltiges Blattmatrixdict darstellt. Ist dies nicht der Fall, wird eine

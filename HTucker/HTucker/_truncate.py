@@ -1,5 +1,5 @@
 import torch
-from .dimtree.dimtree import dimtree
+from dimtree.dimtree import dimtree
 from math import sqrt
 
 def truncate(cls, x, opts=None):
