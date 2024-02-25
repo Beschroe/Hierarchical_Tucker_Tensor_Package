@@ -1,4 +1,4 @@
-Das in diesem Repository enthaltene Python Package enthält die Implementierung des hierarchischen Tuckerformats für Tensoren und beruht dabei
+Das in diesem Repository enthaltene Python Package enthält eine Implementierung des hierarchischen Tuckerformats für Tensoren und beruht dabei
 auf den beiden nachstehenden Arbeiten: 
 
 - D. Kressner and C. Tobler, Algorithm 941, ACM Transactions on Mathematical Software, 40 (2014), pp. 1–22.
