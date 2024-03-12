@@ -27,7 +27,7 @@ pip install torch==2.2.1 numpy==1.26.4
 ```
 3) Klonen von Hierarchical_Tucker_Tensor_Package in ein beliebiges Verzeichnis
 ```
-cd PREFERED_DIRECTORY
+cd PREFERRED_DIRECTORY
 git clone https://github.com/Beschroe/Hierarchical_Tucker_Tensor_Package.git
 ```
 4) Installieren von Hierarchical_Tucker_Tensor_Package
