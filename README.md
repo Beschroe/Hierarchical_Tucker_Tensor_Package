@@ -4,6 +4,7 @@ auf den beiden nachstehenden Arbeiten:
 
 - D. Kressner and C. Tobler, Algorithm 941, ACM Transactions on Mathematical Software, 40 (2014), pp. 1–22.
 - L. Grasedyck, Hierarchical singular value decomposition of tensors, SIAM Journal on Matrix Analysis and Applications, 31 (2010), pp. 2029–2054.
+- B. Schröter, Approximation der Dynamik eines epidemiologischen Modells im hierarchischen Tuckerformat, Masterthesis, https://github.com/Beschroe/Masterarbeit, 11 2023.
 
 ### Requirements:
 (Möglicherweise sind andere Versionen ebenfalls möglich. Entwickelt wurde das Package allerdings mit untenstehender Konfiguration)
