@@ -6,7 +6,7 @@ auf den beiden nachstehenden Arbeiten:
 - L. Grasedyck, Hierarchical singular value decomposition of tensors, SIAM Journal on Matrix Analysis and Applications, 31 (2010), pp. 2029–2054.
 
 ### Requirements:
-(Möglicherweise sind andere Versionen ebenfalls möglich. Getestet wurde das Package allerdings mit untenstehender Konfiguration)
+(Möglicherweise sind andere Versionen ebenfalls möglich. Entwickelt wurde das Package allerdings mit untenstehender Konfiguration)
 - python = 3.10
 - torch = 2.2.1
 - numpy = 1.26.4
@@ -23,7 +23,6 @@ conda activate ENV_NAME
 2) Installieren der vorausgesetzten Pakete
 ```
 pip install torch==2.2.1 numpy==1.26.4
-pip install numpy==1.26.4
 ```
 3) Klonen von Hierarchical_Tucker_Tensor_Package in ein beliebiges Verzeichnis
 ```
