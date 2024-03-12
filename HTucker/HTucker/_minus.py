@@ -1,33 +1,33 @@
-import torch
 from copy import deepcopy
+import torch
 
-
-def plus(self, y):
+def minus(self, y):
     """
-    Berechnet die Summe der beiden hierarchischen Tuckertensoren 'self' und 'y'. Voraussetzung hierfuer ist, dass deren
-    Dimensionsbaeume uebereinstimmen.
-    Der hierarchische Rang der Summe ergibt sich als Summe der beiden hierarchischen Raenge von 'self' und 'y'. Es ist
-    also ggf. ratsam eine anschliessende Rangkuerzung durchzufuehren.
+    Berechnet die Differenz der beiden hierarchischen Tuckertensoren 'self' und 'y'. Voraussetzung hierfuer ist, dass
+    deren Dimensionsbaeume uebereinstimmen.
+    Der hierarchische Rang der Differenz ergibt sich als Summe der beiden hierarchischen Raenge von 'self' und 'y'. Es
+    ist also ggf. ratsam eine anschliessende Rangkuerzung durchzufuehren.
     ______________________________________________________________________
     Parameter:
-    - y HTucker.HTTensor: Einer der beiden Summanden
+    - y HTucker.HTTensor: Der Subtrahend der Differenz.
     ______________________________________________________________________
     Output:
-    (HTucker.HTTensor,): Die Summe gegeben als hierarchischer Tuckertensor.
+    (HTucker.HTTensor,): Die Differenz gegeben als hierarchischer Tuckertensor.
     ______________________________________________________________________
     Beispiel:
                       HTucker.HTTensor         <~~~>          torch.Tensor
     a)
        x = HTTensor.randn((3,4,5,6))              |           x = torch.randn(3,4,5,6)
        y= HTTensor.randn((3,4,5,6))               |           y = torch.randn(3,4,5,6)
-       summe = x.plus(y)                         |           summe = x + y
+       summe = x.minus(y)                        |           summe = x - y
 
-    b) Die Verwendung des Operators "+" ist
+    b) Die Verwendung des Operators "-" ist
        moeglich
        x = HTTensor.randn((10,8,4))              |           x = torch.randn(10,8,4)
        y= HTTensor.randn((10,8,4))               |           y = torch.randn(10,8,4)
-       summe = x + y                            |           summe = x + y
+       summe = x - y                            |           summe = x - y
     """
+
     # Typecheck
     if not isinstance(y, type(self)):
         raise TypeError("Argument 'y': type(y)={} | y ist nicht vom Typ HTucker.HTucker.".format(type(y)))
@@ -57,7 +57,7 @@ def plus(self, y):
         if x.dtree.is_root(node):
             B = torch.zeros(rx[l] + ry[l], rx[r] + ry[r], 1)
             B[:rx[l], :rx[r]] = x.B[node]
-            B[rx[l]:, rx[r]:] = y.B[node]
+            B[rx[l]:, rx[r]:] = -1.0 * y.B[node]
         else:
             B = torch.zeros(rx[l] + ry[l], rx[r] + ry[r], rx[node] + ry[node])
             B[:rx[l], :rx[r], :rx[node]] = x.B[node]
@@ -67,3 +67,4 @@ def plus(self, y):
     # Setze is_orthog Flag auf False
     x.is_orthog = False
     return x
+

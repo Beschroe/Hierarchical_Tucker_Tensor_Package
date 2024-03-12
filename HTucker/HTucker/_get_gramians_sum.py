@@ -1,10 +1,28 @@
 import torch
 from numpy import cumsum
 
-def get_gramians_sum(cls, summands):
+def _get_gramians_sum(cls, summands: list):
     """
-    Berechnet die reduzierten Gram'schen Matrizen der Summe der hierarchischen Tuckertensoren in summands.
-    :param summanden: list: HTucker.HTucker
+    Hinweis: Dies ist eine interne Funktion.
+    ______________________________________________________________________
+    Berechnet die reduzierten Gram'schen Matrizen der Summe aller in 'summands' enthaltenen hierarchischen
+    Tuckertensoren. Die Berechnung findet hierbei statt, ohne die Summe tatsaechlich auszurechnen.
+
+    Sei X ein Tensor und X_t die zugehoerige t-Matrizierung. Ferner sei U_t eine zugehoerige orthogonale Basis
+    des Spaltenraums von X_t. Dann erfuellt die reduzierte Gram'sche Matrix G_t folgende Gleichung:
+    X_t @ X_t.T = U_t @ G_t @ U_t.T
+    ______________________________________________________________________
+    Parameter:
+    - summands list mit HTucker.HTTensor Eintraegen: Die Summanden von deren Summe die reduzierten Gram'schen Matrizen
+                                                    berechnet werden sollen.
+    ______________________________________________________________________
+    Output:
+    (dict,): Das dict enthaelt fuer jeden Knoten des Dimensionsbaums der impliziten Summe die zugehoerige
+             reduzierte Gram'sche Matrix.
+    ______________________________________________________________________
+    Beispiel:
+    X, Y, Z = HTTensor.randn((3,4,5,6)), HTucker.randn((3,4,5,6)), HTucker.randn((3,4,5,6))
+    G = HTTensor._get_gramians_sum([X,Y,Z])
     """
     # Pruefe die Summanden
     if not isinstance(summands, list):

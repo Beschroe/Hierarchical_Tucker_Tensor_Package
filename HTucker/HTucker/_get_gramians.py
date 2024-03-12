@@ -1,21 +1,37 @@
 import torch
+import warnings
 
 
-def get_gramians(self):
+def _get_gramians(self):
     """
-    Berechnet die reduzierten Gram'schen Matrizen des durch self repraesentierten hierarchischen Tuckertensors.
-    Hinweis: Ist self nicht orthogonal, wird es vor der Berechnung der reduzierten Gram'schen Matrizen
-    orthogonalisiert.
-    :param self: HTucker.HTucker
-    :return: dict (tuple: int) -> torch.Tensor
+    Hinweis: Dies ist eine interne Funktion
+    ______________________________________________________________________
+    Berechnet die reduzierten Gram'schen Matrizen des hierarchischen Tuckertensors 'self'. Dabei wird 'self' en passant
+    orthogonalisiert, sofern 'self' noch kein orthogonaler hierarchischer Tuckertensor ist.
+
+    Sei X ein Tensor und X_t die zugehoerige t-Matrizierung. Ferner sei U_t eine zugehoerige orthogonale Basis
+    des Spaltenraums von X_t. Dann erfuellt die reduzierte Gram'sche Matrix G_t folgende Gleichung:
+    X_t @ X_t.T = U_t @ G_t @ U_t.T
+    ______________________________________________________________________
+    Output:
+    (dict,): Das dict enthaelt fuer jeden Knoten des Dimensionsbaums von 'self' die zugehoerige
+             reduzierte Gram'sche Matrix.
+    ______________________________________________________________________
+    Beispiel:
+    X = torch.randn(3,4,5,6)
+    Xh = HTTensor.truncate(X)
+    G = Xh._get_gramians()
+    t = (0,)
+    X_t = HTTensor.matricise(X,t)
+    G_t = G[t]
+    U_t = Xh.U[t]
+    torch.allclose(X_t @ X_t.T, U_t @ G_t @ U_t.T)    # is True
     """
     x = self
 
     # Orthogonalisiere x, falls notwendig
     if not x.is_orthog:
         x.orthogonalize()
-        #warnings.warn("HTucker Tensor {} wurde waehrend der Berechnung der reduzierten Gram'schen Matrizen "
-        #              "orthogonalisiert.".format(self))
 
     # Gramian dict
     G = {x.dtree.get_root(): torch.ones(1, 1)}

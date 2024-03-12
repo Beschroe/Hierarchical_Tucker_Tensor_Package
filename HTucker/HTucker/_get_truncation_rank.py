@@ -1,21 +1,33 @@
 import torch
 
 
-def get_truncation_rank(cls, sv, opts):
+def _get_truncation_rank(cls, sv: torch.Tensor, opts: dict):
     """
-    Gibt basierend auf sv (absteigend sortierte Singulaerwerte) und opts den minimalen Rang zurueck, sodass die in
-    opts hinterlegten constraints erfuellt werden. 'max_rank' wiegt dabei schwerer als die einzuhaltenden Fehler-
-    schranken.
-    :param sv: list: float
-    :param opts: dict
-    :return: int
+    Hinweis: Dies ist eine innere Funktion der Funktionen truncate, truncate_htt, ele_mul und trunc_sum.
+    ______________________________________________________________________
+    Berechnet auf Grundlage der in 'sv' enthaltenen Singulaerwerte den minimalen hierarchischen Rang, der die
+    Constraints aus 'opts' einhaelt.
+    ______________________________________________________________________
+    Parameter:
+    - sv 1D-torch.Tensor: Der 1D Tensor enthaelt absteigend sortierte Singulaerwerte.
+    - opts dict: Das Optionen-dict kann folgende Constraints enthalten:
+                                    - "max_rank": positiver integer | Legt den maximalen hierarchischen Rang
+                                                  fest
+                                    - "err_tol_abs": positiver float | Legt die einzuhaltende absolute
+                                                     Fehlertoleranz fest
+                                    - "err_tol_rel": positiver float | Left die einzuhaltende relative
+                                                     Fehlertoleranz fest
+    ______________________________________________________________________
+    Output:
+    (int,): Der berechnete hierarchische Rang
+    ______________________________________________________________________
     """
     if not isinstance(sv, torch.Tensor):
         raise TypeError("Argument 'sv': type(sv)={} | sv ist kein np.ndarray.".format(type(sv)))
     if len(sv.shape) != 1:
         raise TypeError("Argument 'sv': sv ist ein {}D-np.ndarray,"
                         " waehrend ein 1D-np.ndarray gefordert ist.".format(len(sv.shape)))
-    cls.check_opts(opts)
+    cls._check_opts(opts)
     # Werden die ersten k Singulaervektoren mitgenommen, ist der Fehler in Frobeniusnurm durch sv_sum[k] gegeben
     sv_sum = torch.hstack((torch.sqrt(torch.cumsum((sv ** 2).flip(0), 0)).flip(0), torch.zeros(1)))
     rank_err_tol_abs = 1

@@ -4,41 +4,62 @@ from copy import deepcopy
 from math import sqrt
 
 
-def ele_mul(self, y, opts=None):
+def ele_mul(self, y, opts: dict=None):
     """
-    Berechnet das elementweise Produkt (Hadamard Produkt) aus self und y.
-    Dabei wird en passant eine Rangkuerzung entsprechend opts vorgenommen.
-    opts enthaelt folgende Optionen:
+    Berechnet das elementweise Produkt (Hadamard Produkt) der beiden hierarchischen Tuckertensoren 'self' und 'y'.
+    Voraussetzung dafuer ist, dass deren Dimensionsbaeume uebereinstimmen. Waehrend der Berechnung wird en passant eine
+    Rangkuerzung des Produkts entsprechend der Constraints in 'opts' vorgenommen.
+    Hinweis: Da die erhaltene Fehlerschranke eher grosszuegig ausfaellt, kann es sinnvoll sein, im Anschluss
+             eine weitere Rangkuerzung vorzunehmen.
+    ______________________________________________________________________
+    Parameter:
+    - y HTucker.HTTensor: Ein hierarchischer Tuckertensor dessen Dimensionsbaum mit dem Dimensionsbaum von 'self'
+                        uebereinstimmt.
+    - opts dict: Das Optionen-dict kann folgende Constraints enthalten:
                                     - "max_rank": positiver integer | Legt den maximalen hierarchischen Rang
                                                   fest
                                     - "err_tol_abs": positiver float | Legt die einzuhaltende absolute
                                                      Fehlertoleranz fest
                                     - "err_tol_rel": positiver float | Left die einzuhaltende relative
                                                      Fehlertoleranz fest
-    :param y: HTucker.HTucker
-    :param opts: dict
+    ______________________________________________________________________
+    Output:
+    (HTucker.HTTensor,): Das elementweise Produkt.
+    ______________________________________________________________________
+    Beispiel:
+                  HTucker.HTTensor                   <~~~>          torch.Tensor
+    a) Mit en passant Rangkuerzung
+       x = HTTensor.randn((3,4,5,6))             |           x = torch.randn(3,4,5,6)
+       y = HTTensor.randn((3,4,5,6))             |           y = torch.randn(3,4,5,6)
+       opts = {"max_rank": 10,                   |           prod = x * y
+               "err_tol_abs": 1e-2}              |
+       prod = x.ele_mul(y, opts)                 |
+
+    b) Mit en passant Rangkuerzung
+       x = HTTensor.randn((10,8,4))              |           x = torch.randn(10,8,4)
+       y = HTTensor.randn((10,8,4))              |           y = torch.randn(10,8,4)
+       opts = {"err_tol_abs": 1e-2}              |           prod = x * y
+       prod = x.ele_mul(y, opts)                 |
+
+    x) Ohne en passant Rangkuerzung
+       x = HTTensor.randn((20,4,3,7))            |           x = torch.randn(20,4,3,7)
+       y = HTTensor.randn((20,4,3,7))            |           y = torch.randn(20,4,3,7)
+       prod = x.ele_mul(y)                       |           prod = x * y
     """
     if not isinstance(y, type(self)):
-        raise TypeError("Argument 'y': type(y)={} | y ist kein HTucker.HTucker Objekt.".format(type(y)))
+        raise TypeError("Argument 'y': type(y)={} | y ist kein HTucker.HTTensor Objekt.".format(type(y)))
     if not self.dtree.is_equal(y.dtree):
         raise ValueError("Argument 'y': Der Dimensionsbaum von y ist nicht kompatibel.")
     if self.get_shape() != y.get_shape():
         raise ValueError("Argument 'y': y.shape={} | Die shape von y ist nicht kompatibel zur shape von"
                          "self={}.".format(y.get_shape(), self.get_shape()))
     if opts is not None:
-        self.check_opts(opts)
+        self._check_opts(opts)
 
-    # Aus Lesbarkeitsgruenden
-    x = self
-    rx = x.get_rank()
-    ry = y.get_rank()
+    # Erzeuge Kopien
+    x = deepcopy(self)
+    y = deepcopy(y)
 
-    # Buffer die Transfertensoren aus x und y
-    Bx = deepcopy(x.B)
-    By = deepcopy(y.B)
-
-    # Blattmatrixdict, Transfertensordict und Dimtree des resultierenden HTucker Tensors
-    U, B, dtree = {}, {}, deepcopy(x.dtree)
 
     # Anpassen der Fehlertoleranzen in opts
     # Soll global der Fehler e eingehalten werden, muss der Kuerzungsfehler pro Knoten
@@ -52,17 +73,17 @@ def ele_mul(self, y, opts=None):
     y.orthogonalize()
 
     # Berechne reduzierten Gram'schen Matrizen
-    Gx = x.get_gramians()
-    Gy = y.get_gramians()
+    Gx = x._get_gramians()
+    Gy = y._get_gramians()
 
     # Traversiere der Baum bottom-up
-    for level in range(dtree.get_depth(), -1, -1):
-        for node in dtree.get_nodes_of_lvl(level):
-            if dtree.is_root(node):
+    for level in range(x.dtree.get_depth(), -1, -1):
+        for node in x.dtree.get_nodes_of_lvl(level):
+            if x.dtree.is_root(node):
                 # Knoten ist die Wurzel
                 # Fuer die Wurzel, die Rang 1 hat, werden keine Singulaevektoren berechnet
                 # Der Transfertensor kann direkt aktualisiert werden
-                B[node] = Bx[node] * By[node]
+                x.B[node] = x.B[node] * y.B[node]
 
             else:
                 # Knoten ist nicht die Wurzel
@@ -88,7 +109,7 @@ def ele_mul(self, y, opts=None):
                 # Hinweis: Der Rang bezieht sich auf alle Zweierprodukte. Der maximale Rang
                 #          ist damit gegeben als #Spalten in Qx * #Anzahl Spalten in Qy
                 if opts:
-                    rank = self.get_truncation_rank(torch.Tensor(sv_flat_and_ordered), opts)
+                    rank = self._get_truncation_rank(torch.Tensor(sv_flat_and_ordered), opts)
                 else:
                     rank = len(sv_flat_and_ordered)
 
@@ -100,37 +121,30 @@ def ele_mul(self, y, opts=None):
                 Qy = Qy[:, indy]
 
 
-                if dtree.is_leaf(node):
+                if x.dtree.is_leaf(node):
                     # Knoten ist ein Blatt
                     # Update die Blattmatrix
-                    U[node] = (x.U[node] @ Qx) * (y.U[node] @ Qy)
+                    x.U[node] = (x.U[node] @ Qx) * (y.U[node] @ Qy)
 
                 else:
                     # Knoten ist ein inneren Knoten
                     # Update Transfertensor
-                    Bx[node] = torch.tensordot(Bx[node], Qx, dims=([2], [0]))
-                    By[node] = torch.tensordot(By[node], Qy, dims=([2], [0]))
-                    B[node] = Bx[node] * By[node]
+                    x.B[node] = torch.tensordot(x.B[node], Qx, dims=([2], [0]))
+                    y.B[node] = torch.tensordot(y.B[node], Qy, dims=([2], [0]))
+                    x.B[node] = x.B[node] * y.B[node]
                 # Aktualisiere den Transfertensor des Elternknotens
                 # Hierbei ist es unerheblich, ob node ein Blatt oder
                 # innerer Knoten ist
-                par = dtree.get_parent(node)
-                if dtree.is_left(node):
-                    Bx[par] = torch.tensordot(Qx, Bx[par], dims=([0], [0]))
-                    By[par] = torch.tensordot(Qy, By[par], dims=([0], [0]))
+                par = x.dtree.get_parent(node)
+                if x.dtree.is_left(node):
+                    x.B[par] = torch.tensordot(Qx, x.B[par], dims=([0], [0]))
+                    y.B[par] = torch.tensordot(Qy, y.B[par], dims=([0], [0]))
                 else:
-                    Bx[par] = torch.tensordot(Qx, Bx[par], dims=([0], [1]))
-                    Bx[par] = torch.movedim(Bx[par], source=0, destination=1)
-                    By[par] = torch.tensordot(Qy, By[par], dims=([0], [1]))
-                    By[par] = torch.movedim(By[par], source=0, destination=1)
+                    x.B[par] = torch.tensordot(Qx, x.B[par], dims=([0], [1]))
+                    x.B[par] = torch.movedim(x.B[par], source=0, destination=1)
+                    y.B[par] = torch.tensordot(Qy, y.B[par], dims=([0], [1]))
+                    y.B[par] = torch.movedim(y.B[par], source=0, destination=1)
 
-            # Entferne die gebufferten Transfertensoreintraege
-            if not dtree.is_leaf(node):
-                del Bx[node]
-                del By[node]
-
-    # Erzeuge resultierenden HTucker Tensor, der das gekuerzte elementweise Produkt
-    # darstellt
-    z = type(self)(U=U, B=B, dtree=dtree, is_orthog=False)
-
-    return z
+    # Setze is_orthog Flag auf false
+    x.is_orthog = False
+    return x

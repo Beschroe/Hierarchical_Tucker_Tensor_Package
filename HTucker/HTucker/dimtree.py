@@ -1,4 +1,3 @@
-from copy import deepcopy
 import numpy as np
 
 
@@ -7,10 +6,10 @@ class dimtree:
     Implementiert einen Dimensionsbaum zur Verwaltung der Dimensionshierarchie eines hierarchischen Tuckertensors.
     """
 
-    def __init__(self, nodes: dict):
+    def __init__(self, nodes):
         """
-        Erzeugt einen Dimensionsbaum auf Grundlage der Knotenhierarchie in nodes.
-        :param nodes: dict mit Eintraegen der Form (0,1): [(0,), (1,)]
+        Erzeugt einen Dimensionsbaum auf Grundlage der Knotenhierarchie in nodes
+        :param nodes: dict: (tuple: int, list: tuple: int)
         """
         dimtree._check_nodes(nodes)
         self.nodes = nodes
@@ -20,7 +19,7 @@ class dimtree:
         """
         Prueft, ob nodes einen gueltigen Dimensionsbaum repraesentiert.
         Hinweis: Die Ueberpruefungen sind unvollstaendig.
-        :param nodes: dict mit Eintraegen der Form (0,1): [(0,), (1,)]
+        :param nodes: dict: (tuple: int, list: tuple: int)
         :return:
         """
         # Typechecks
@@ -62,7 +61,7 @@ class dimtree:
                     raise ValueError(
                         "Argument 'nodes' = {}: Der Value {} enthaelt tuple mit geteilten Dimensionen.".format(nodes,
                                                                                                                v))
-                if k != v[0] + v[1]:
+                if k != (v[0] + v[1]):
                     raise ValueError("Argument 'nodes' = {} : Der Key {} ist ungleich der Kontaktenation"
                                      " der tuple des Values {}.".format(nodes, k, v))
             else:
@@ -74,11 +73,35 @@ class dimtree:
                         " der Key ein Blattknoten ist.".format(nodes, k))
 
     @staticmethod
-    def get_canonic_dimtree(nr_dims):
+    def get_canonic_dimtree(nr_dims: int):
         """
         Erzeugt den kanonischen Dimensionsbaum fuer die Anzahl 'nr_dims' uebergebener Dimensionen.
-        :param nr_dims: positiver integer
-        :return: dimtree
+        ______________________________________________________________________
+        Parameter:
+        - nr_dims int: Die Anzahl an Dimensionen, die der Dimensionsbaum strukturiert.
+        ______________________________________________________________________
+        Output:
+        (dimtree,): Der kanonische Dimensionsbaum.
+        ______________________________________________________________________
+        Beispiel:
+        a) Kanonischer Dimensionsbaum fuer 3 Dimensionen
+                    (0, 1, 2)
+               (0, 1)       (2,)
+            (0,)    (1,)
+        b)  Kanonischer Dimensionsbaum fuer 4 Dimensionen
+                    (0, 1, 2, 3)
+               (0, 1)         (2, 3)
+            (0,)    (1,)   (2,)    (3,)
+        c) Kanonischer Dimensionsbaum fuer 5 Dimensionen
+                            (0, 1, 2, 3, 4)
+                    (0, 1, 2)             (3, 4)
+               (0, 1)     (2,)         (3,)    (4,)
+            (0,)    (1,)
+        d) Kanonischer Dimensionsbaum fuer 8 Dimensionen
+                                    (0, 1, 2, 3, 4, 5, 6, 7)
+                         (0, 1, 2, 3)                      (4, 5, 6, 7)
+                    (0, 1)          (2, 3)            (4, 5)          (6, 7)
+                 (0,)    (1,)    (2,)    (3,)      (4,)    (5,)    (6,)    (7,)
         """
         if not np.issubdtype(type(nr_dims), np.integer):
             raise TypeError("Argument 'nr_dims' = {}: {} ist kein integer.".format(nr_dims, type(nr_dims)))
@@ -134,7 +157,7 @@ class dimtree:
     def is_leaf(self, node):
         """
         Gibt True zurueck, falls node ein Blattknoten ist. Ansonsten wird False zurueckgegeben.
-        :param node: Ein tuple mit integer Eintraegen
+        :param node: tuple: integer
         :return: bool
         """
         # Typecheck
@@ -151,7 +174,7 @@ class dimtree:
     def get_children(self, node):
         """
         Gibt die Kinder des Knotens node zurueck. Ist node ein Blattknoten, so wird die leere Liste zurueckgegeben.
-        :param node: Ein tuple mit integer Eintraegen
+        :param node: tuple: integer
         :return: list
         """
         # Typecheck
@@ -165,7 +188,7 @@ class dimtree:
     def get_root(self):
         """
         Gibt den Wurzelknoten zurueck.
-        :return: Ein tuple mit integer Eintraegen
+        :return: tuple: integer
         """
         root = [node for node in self.get_nodes() if self.is_root(node)]
         if len(root) > 1:
@@ -176,8 +199,8 @@ class dimtree:
 
     def get_lvl(self, node):
         """
-        Gibt das Level des Knotens node zurueck.
-        :param node: Ein tuple mit integer Eintraegen
+        Gibt das Level des durch node bestimmten Knotens zurueck.
+        :param node: tuple: integer
         :return: integer
         """
         # Typechecks
@@ -197,8 +220,8 @@ class dimtree:
     def get_parent(self, node):
         """
         Gibt den Elternknoten des Knotens node zurueck.
-        :param node: Ein tuple mit integer Eintraegen
-        :return: Ein tuple mit integer Eintraegen
+        :param node: tuple: integer
+        :return: tuple: integer
         """
         # Typechecks
         if not isinstance(node, tuple):
@@ -278,8 +301,8 @@ class dimtree:
         """
         Gibt die Knoten des Subtrees beginnend bei node in depth-first-search Reihenfolge zurueck. Der Parameter order
         gibt dabei an, in welcher Reihenfolge die Kinder eines Knotens und der Knoten selbst behandelt werden.
-        :node: Ein tuple mit integer Eintraegen
-        :order: Eines der folgenden str Objekte ["nlr", "nrl", "lnr", "lrn", "rnl", "rln"]
+        :node: integer
+        :order: str: ["nlr", "nrl", "lnr", "lrn", "rnl", "rln"]
         :return: list
         """
         if node is None:
@@ -321,14 +344,14 @@ class dimtree:
     def get_nodes(self):
         """
         Gibt alle Knoten des Dimensionsbaums zurueck.
-        :return: Eine list mit tuple Elementen. Die tuple Elemente haben integer Eintraege.
+        :return: list: tuple: integer
         """
         return list(self.nodes.keys())
 
     def get_nodes_bfs(self):
         """
         Gibt alle Knoten des Dimensionsbaums in bfs Reihenfolge zurueck.
-        :return: Eine list mit tuple Elementen. Jedes tuple Element hat integer Eintraege
+        :return: list: tuple: integer
         """
         nodes_to_visit = [self.get_root()]
         nodes_visited = []
@@ -343,7 +366,7 @@ class dimtree:
         """
         Gibt eine Liste aller Knoten auf Level lvl zurueck
         :param lvl: integer
-        :return: Eine list mit tuple Elementen. Jedes tuple Element hat integer Eintraege
+        :return:
         """
         # Typecheck
         if not np.issubdtype(type(lvl), np.integer):
@@ -356,14 +379,14 @@ class dimtree:
     def get_leaves(self):
         """
         Gibt eine Liste mit allen Blattknoten zurueck.
-        :return: Eine list mit tuple Elementen. Jedes tuple Element hat integer Eintraege
+        :return: list: tuple: integer
         """
         return [node for node in self.get_nodes() if self.is_leaf(node)]
 
     def get_inner_nodes(self):
         """
         Gibt die inneren Knoten des Dimensionsbaums zurueck.
-        :return: Eine list mit tuple Elementen. Jedes tuple Element hat integer Eintraege
+        :return: list: tuple: integer
         """
         return [node for node in self.get_nodes() if self.is_inner(node)]
 
@@ -388,7 +411,7 @@ class dimtree:
     def is_inner(self, node):
         """
         True, falls node ein innerer Knoten ist. Ansonsten False.
-        :param node: Ein tuple mit integer Eintraegen.
+        :param node: tuple: integer
         :return: bool
         """
         # Typechecks
@@ -405,7 +428,7 @@ class dimtree:
     def is_left(self, node):
         """
         True, falls node ein linkes Kind ist. Ansonsten False.
-        :param node: Ein tuple mit integer Eintraegen
+        :param node: tuple:integer
         :return:
         """
         # Typechecks
@@ -429,7 +452,7 @@ class dimtree:
     def is_right(self, node):
         """
         True, falls node ein rechtes Kind ist. Ansonsten False.
-        :param node: Ein tuple mit integer Eintraegen
+        :param node: tuple: integer
         :return: bool
         """
         # Typechecks
@@ -453,8 +476,8 @@ class dimtree:
     def get_right(self, node):
         """
         Gibt das rechte Kind zurueck, falls es sich um einen inneren Knoten handelt. Ansonsten None.
-        :param node: Ein tuple mit integer Eintraegen
-        :return: Ein tuple mit integer Eintraegen
+        :param node: tuple: integer
+        :return: tuple: integer
         """
         # Typechecks
         if not isinstance(node, tuple):
@@ -475,8 +498,8 @@ class dimtree:
     def get_left(self, node):
         """
         Gibt das linke Kind zurueck, falls es sich um einen inneren Knoten handelt. Ansonsten None.
-        :param node: Ein tuple mit integer Eintraegen
-        :return: Ein tuple mit integer Eintraegen
+        :param node: tuple: integer
+        :return: tuple: integer
         """
         # Typechecks
         if not isinstance(node, tuple):
@@ -497,8 +520,8 @@ class dimtree:
     def get_sibling(self, node):
         """
         Gibt den Geschwisterknoten des Knotens 'node' zurueck.
-        :param node: Ein tuple mit integer Eintraegen
-        :return: Ein tuple mit integer Eintraegen
+        :param node: tuple:int
+        :return: tuple: int
         """
         # Typechecks
         if not isinstance(node, tuple):
@@ -520,7 +543,7 @@ class dimtree:
     def remove_children(self, node):
         """
         Entfernt die Kinder des Knotens 'node', sofern dieser kein Blattknoten ist.
-        :param node: Ein tuple mit integer Eintraegen
+        :param node: tuple:int
         :return:
         """
         # Typechecks
@@ -535,7 +558,7 @@ class dimtree:
     def remove_node(self, node):
         """
         Entfernt den Knoten node aus dem Dimensionsbaum, sofern vorhanden.
-        :param node: Ein tuple mit integer Eintraegen
+        :param node: tuple:int
         :return:
         """
         # Typechecks
@@ -552,8 +575,8 @@ class dimtree:
     def set_children(self, node, children):
         """
         Der Knoten node erhaelt die beiden in children enthaltenen Knoten als Kinder.
-        :param node: Ein tuple mit integer Eintraegen
-        :param children: Eine list mit tuple Elementen. Jedes dieser tuple hat integer Eintraege
+        :param node: tuple:int
+        :param children: list:tuple:int
         :return:
         """
         # Typechecks
@@ -576,7 +599,7 @@ class dimtree:
     def is_equal(self, dimtree_two):
         """
         Prueft, ob die beiden Dimensionsbaeume self und dimtree_two uebereinstimmen
-        :param dimtree_two: Ein dimtree Objekt.
+        :param dimtree_two: dimtree.dimtree
         :return: bool
         """
         if not isinstance(dimtree_two, dimtree):
@@ -584,10 +607,10 @@ class dimtree:
                             " dimtree_two ist kein Dimensionsbaum".format(type(dimtree_two)))
         return self.nodes == dimtree_two.nodes
 
-    def get_minimal_subtree_covering_dims(self, dims: list):
+    def get_minimal_nodes_covering_dims(self, dims: list):
         """
         Gibt die minimale Anzahl an Knoten zurueck, die alle in dims enthaltenen Dimensionen repraesentieren.
-        :param dims: Eine list mit integer Eintraegen
+        :param dims: enthaelt alle Dimensionen, die repraesentiert werden sollen
         """
         if not isinstance(dims, list):
             raise TypeError("Argument 'dims': type(dims)={} | dims ist keine list.".format(type(dims)))
@@ -596,43 +619,25 @@ class dimtree:
         if not set(dims) <= set(self.get_root()):
             raise ValueError("Argument 'dims': Die in in dims enthaltenen Dimensionen sind (teilweise) nicht durch"
                              "den Dimensionsbaum repraesentiert.")
-        return self._get_minimal_subtree_covering_dims_rec(self.get_root(), dims)
+        return self.get_minimal_nodes_covering_dims_rec(self.get_root(), dims)
 
-    def _get_minimal_subtree_covering_dims_rec(self, node: tuple, dims: list):
+    def get_minimal_nodes_covering_dims_rec(self, node: tuple, dims: list):
         """
         Rekursive Helferfunktion fuer get_minimal_nodes_covering_dims.
         """
         if self.is_leaf(node):
-            return [node]
+            return [node] if set(node) <= set(dims) else []
         else:
             l, r = self.get_children(node)
-            if set(dims) <= set(l):
-                # linker Subtree enthaelt alle Dimensionen
-                return self._get_minimal_subtree_covering_dims_rec(l, dims)
-            elif set(dims) <= set(r):
-                # rechter Subtree enthaelt alle Dimensionen
-                return self._get_minimal_subtree_covering_dims_rec(r, dims)
-            elif set(l).intersection(set(dims)) and set(r).intersection(set(dims)):
-                # rechter und linker Subtree enthalten jeweils einen Teil der Dimensionen
-                return self._get_minimal_subtree_covering_dims_rec(l, dims) + [node] + \
-                    self._get_minimal_subtree_covering_dims_rec(r, dims)
-            elif set(l).intersection(set(dims)) and not set(r).intersection(set(dims)):
-                # Nur linker Subtree enthaelt Teil der Dimensionen
-                return self._get_minimal_subtree_covering_dims_rec(l, dims) + [node]
-            elif not set(l).intersection(set(dims)) and set(r).intersection(set(dims)):
-                # Nur rechter Subtree enthaelt Teil der Dimensionen
-                return [node] + self._get_minimal_subtree_covering_dims_rec(r, dims)
+            if set(l) <= set(dims) and set(r) <= set(dims):
+                return [node]
             else:
-                # Weder linker noch rechter Subtree enthalten mindestens einen Teil der Dimensionen
-                # Dieser Fall tritt bei korrekter Funktionsweise nicht ein
-                raise RuntimeError("Die Kinder des Knotens {} gegeben als {} und {} enthalten"
-                                   "keine der Dimensionen {}. Dieser Fall darf bei korrekter Funktionsweise"
-                                   "nicht auftreten.".format(node, l, r, dims))
+                return (self.get_minimal_nodes_covering_dims_rec(l, dims) +
+                        self.get_minimal_nodes_covering_dims_rec(r, dims))
 
-    def get_subtree(self, node: tuple):
+    def get_subtree(self, node):
         """
         Gibt den subtree beginnend bei node zurueck.
-        :param node: Ein tuple mit integer Eintraegen
         """
         # Typechecks
         if not isinstance(node, tuple):
@@ -648,10 +653,9 @@ class dimtree:
 
         return type(self)(children)
 
-    def remove_subtree(self, node: tuple):
+    def remove_subtree(self, node):
         """
         Entfernt den subtree, dessen Wurzel dem Knoten node entspricht.
-        :param node: Ein tuple mit integer Eintraegen
         """
         # Typechecks
         if not isinstance(node, tuple):
@@ -663,85 +667,32 @@ class dimtree:
                 to_be_removed += self.nodes[nd]
             del self.nodes[nd]
 
-    def contains(self, node: tuple):
+    def contains(self, node):
         """
-        Prueft, ob der Knoten node im Dimensionsbaum vorhanden ist.
-        :param node: Ein tuple mit integer Eintraegen
+        Prueft, ob der Knoten node existiert.
         """
         # Typechecks
         if not isinstance(node, tuple):
             raise TypeError("Argument 'node' = {}: {} ist kein tuple.".format(node, type(node)))
         return node in self.nodes
 
-    def contained_in_right_subtree_from(self, root: tuple, node: tuple):
+    def replace_node(self, node_old, node_new):
         """
-        Prueft, ob der Knoten node im rechten Subtree der Wurzel root enthalten ist. root kann dabei ein beliebiger
-        Knoten des Dimensionsbaums sein und muss nicht zwingend der tatsaechlichen Wurzel entsprechen.
-        :param root: Ein tuple mit integer Eintraegen
-        :param node: Ein tuple mit integer Eintraegen
-        """
-        # Typechecks
-        if not isinstance(node, tuple):
-            raise TypeError("Argument 'node' = {}: {} ist kein tuple.".format(node, type(node)))
-        if not isinstance(root, tuple):
-            raise TypeError("Argument 'root' = {}: {} ist kein tuple.".format(root, type(root)))
-        # Valuechecks
-        if node not in self.get_nodes():
-            raise ValueError("Argument 'node' = {}: Es existiert kein entsprechender Knoten.".format(node))
-        if root not in self.get_nodes():
-            raise ValueError("Argument 'root' = {}: Es existiert kein entsprechender Knoten.".format(root))
-
-        return not self.contained_in_left_subtree_from(root, node)
-
-    def contained_in_left_subtree_from(self, root: tuple, node: tuple):
-        """
-        Prueft, ob der Knoten node im linken Subtree der Wurzel root enthalten ist. root kann dabei ein beliebiger
-        Knoten des Dimensionsbaums sein und muss nicht zwingend der tatsaechlichen Wurzel entsprechen.
-        :param root: Ein tuple mit integer Eintraegen
-        :param node: Ein tuple mit integer Eintraegen
+        Ersetze den Knoten node_old durch den Knoten node_new. Dies ist genau dann moeglich, wenn node_old und node_new
+        dieselben Dimensionen umfassen. Lediglich deren Reihenfolge darf sich unterscheiden.
+        Beispiel:   - node_old = (0,1,2,3,4) und node_new = (3,4,0,1) ist erlaubt
+                    - node_old = (0,1,2,3,4) und node_new = (3,4) ist nicht erlaubt
+                    - node_old = (1,) und node_new = (2,) ist nicht erlaubt
+        Hinweis: Ist node_old nicht im Dimensionsbaum enthalten, passiert nichts und es wird keine Exception erzeugt.
         """
         # Typechecks
-        if not isinstance(node, tuple):
-            raise TypeError("Argument 'node' = {}: {} ist kein tuple.".format(node, type(node)))
-        if not isinstance(root, tuple):
-            raise TypeError("Argument 'root' = {}: {} ist kein tuple.".format(root, type(root)))
+        if not isinstance(node_old, tuple):
+            raise TypeError("Argument 'node' = {}: {} ist kein tuple.".format(node_old, type(node_old)))
+        if not isinstance(node_new, tuple):
+            raise TypeError("Argument 'node' = {}: {} ist kein tuple.".format(node_new, type(node_new)))
         # Valuechecks
-        if node not in self.get_nodes():
-            raise ValueError("Argument 'node' = {}: Es existiert kein entsprechender Knoten.".format(node))
-        if root not in self.get_nodes():
-            raise ValueError("Argument 'root' = {}: Es existiert kein entsprechender Knoten.".format(root))
-
-        children_of_root = self.get_children(root)
-        if children_of_root:
-            return self.contained_in_subtree_from(children_of_root[0], node)
-        else:
-            # root hat keine Kinder, entsprechend kann node auch nicht im linken Subtree von root liegen
-            return False
-
-    def contained_in_subtree_from(self, root: tuple, node: tuple):
-        """
-        Prueft, ob der Knoten node im Subtree der Wurzel root enthalten ist. root kann dabei ein beliebiger
-        Knoten des Dimensionsbaums sein und muss nicht zwingend der tatsaechlichen Wurzel entsprechen.
-        :param root: Ein tuple mit integer Eintraegen
-        :param node: Ein tuple mit integer Eintraegen
-        """
-        # Typechecks
-        if not isinstance(node, tuple):
-            raise TypeError("Argument 'node' = {}: {} ist kein tuple.".format(node, type(node)))
-        if not isinstance(root, tuple):
-            raise TypeError("Argument 'root' = {}: {} ist kein tuple.".format(root, type(root)))
-        # Valuechecks
-        if node not in self.get_nodes():
-            raise ValueError("Argument 'node' = {}: Es existiert kein entsprechender Knoten.".format(node))
-        if root not in self.get_nodes():
-            raise ValueError("Argument 'root' = {}: Es existiert kein entsprechender Knoten.".format(root))
-
-        return self.get_subtree(root).contains(node)
-
-    def copy(self):
-        """
-        Gibt eine Kopie des Dimensionsbaumobjektes zurueck.
-        :return: dimtree Objekt
-        """
-        return deepcopy(self)
-
+        if not set(node_old) == set(node_new):
+            raise ValueError("Argument 'node_new': node_old={} und node_new={} sind nicht kompatibel.".format(node_old,
+                                                                                                              node_new))
+        self.nodes = {(k if k != node_old else node_new): (v if v != node_old else node_new)
+                      for k, v in self.nodes.items()}

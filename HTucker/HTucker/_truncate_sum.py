@@ -3,19 +3,29 @@ from math import sqrt
 from copy import deepcopy
 
 
-def truncate_sum(cls, summands, opts):
+def truncate_sum(cls, summands: list, opts: dict):
     """
-    Summiert die in summands enthaltenen hierarchischen Tuckertensoren auf und fueht dabei en passant Rangkuerzungen
-    entsprechend opts durch.
-    opts enthaelt folgende Optionen:
+    Berechnet die Summe der hierarchischen Tuckertensoren aus 'summands'. Die Summe wird dabei en passant entsprechend
+    der Constraints in 'opts' gekuerzt.
+    Hinweis: Es wird vorausgesetzt, dass die Dimensionsbaeume aller Summanden uebereinstimmen.
+    ______________________________________________________________________
+    Parameter:
+    - summands [HTucker.HTTensor,...]: Die Summanden gegeben als hierarchische Tuckertensoren.
+    - opts dict: Enthaelt mindestens eine der folgenden Optionen:
                                     - "max_rank": positiver integer | Legt den maximalen hierarchischen Rang
                                                   fest
                                     - "err_tol_abs": positiver float | Legt die einzuhaltende absolute
                                                      Fehlertoleranz fest
                                     - "err_tol_rel": positiver float | Left die einzuhaltende relative
                                                      Fehlertoleranz fest
-    :param summands: list: HTucker.HTucker
-    :param opts: dict
+    ______________________________________________________________________
+    Output:
+    (HTucker.HTTensor,): Die Summe gegeben als hierarchischer Tuckertensor.
+    ______________________________________________________________________
+    Beispiel:
+    X, Y, Z = HTTensor.randn((3,4,5,6)), HTTensor.randn((3,4,5,6)), HTTensor.randn((3,4,5,6))
+    opts = {"max_rank": 25, "err_tol_abs": 10.0}
+    summe = HTTensor.truncate_sum([X,Y,Z], opts)
     """
     # Pruefe die Summanden
     if not isinstance(summands, list):
@@ -29,7 +39,7 @@ def truncate_sum(cls, summands, opts):
         raise ValueError("Argument 'summands': Die Summanden sind nicht kompatibel, da nicht alle Dimensionsbaeume"
                          " uebereinstimmen.")
     # Pruefe das Optionen dicts
-    cls.check_opts(opts)
+    cls._check_opts(opts)
 
     # Blattmatrixdict, Transfertensordict und Dimtree des resultierenden HTucker Tensors
     U, B, dtree = {}, {}, deepcopy(summands[0].dtree)
@@ -42,7 +52,7 @@ def truncate_sum(cls, summands, opts):
                     else v) for k, v in opts.items()}
 
     # Berechne die reduzierten Gram'schen Matrizen der impliziten Summe
-    G = cls.get_gramians_sum(summands)
+    G = cls._get_gramians_sum(summands)
 
     # Berechne gekuerzte Blattmatrizen der impliziten Summe
     # Update dabei on the fly den Transfertensor des Elternknotens
@@ -57,7 +67,7 @@ def truncate_sum(cls, summands, opts):
         # Berechne davon linke Singulaervektoren
         S, sv = cls.left_svd_gramian(G_upd)
         # Berechne basierend auf opts wie viele Spalten behalten werden
-        rank = cls.get_truncation_rank(sv, opts)
+        rank = cls._get_truncation_rank(sv, opts)
         S = S[:, :rank]
         # Berechne schliesslich finale Blattmatrix
         U[leaf] = Q @ S
@@ -102,7 +112,7 @@ def truncate_sum(cls, summands, opts):
             # Berechne davon linke Singulaervektoren
             S, sv = cls.left_svd_gramian(G_upd)
             # Berechne basierend auf opts wie viele Spalten behalten werden
-            rank = cls.get_truncation_rank(sv, opts)
+            rank = cls._get_truncation_rank(sv, opts)
             S = S[:, :rank]
             # Berechne schliesslich finalen Transfertensor
             B[node] = torch.tensordot(Q, S, dims=([2], [0]))

@@ -1,27 +1,40 @@
-from math import prod
-import torch
 from copy import deepcopy
 
 
-def scalar_mul(self, c):
+def scalar_mul(self, c: float):
     """
-    Multipliziert den hierarchischen Tuckertensor self mit dem Skalar c.
-    Hinweis: Die Multiplikation wird auf einer Kopie von self durchgefuehrt.
-    :param self: HTucker.HTucker
-    :param c: float, int, torch.Tensor mit einem Eintrag
-    :param copy: bool
-    :return: HTucker.HTucker
+    Berechnet das Produkt des hierarchischen Tuckertensors 'self' mit dem Skalar 'c'.
+    Hinweis: Die Verwendung des Operators "*" ist moeglich. Dabei entspricht x.scalar_mul(c) dem Ausdruck x * c.
+             Die Formulierung als c * x ist nicht moeglich. Der beteiligte hierarchische Tuckertensor muss stets
+             der erste Operand sein.
+    ______________________________________________________________________
+    Parameter:
+    - c float: Der Skalar mit dem 'self' multipliziert wird
+    ______________________________________________________________________
+    Output:
+    (HTucker.HTTensor,): Das Produkt gegebn als hierarchischer Tuckertensor
+    ______________________________________________________________________
+    Beispiel:
+                  HTucker.HTTensor             <~~~>            torch.Tensor
+    a) x = HTTensor.randn((3,4,5,6))              |           x = torch.randn(3,4,5,6)
+       c = 3.1415926                             |           c = 3.1415926
+       prod = x.scalar_mul(c)                    |           prod = x * c
+
+    a) Die Verwendung des Operators "*" ist
+       moeglich.
+       x = HTTensor.randn((3,4,5,6))              |           x = torch.randn(3,4,5,6)
+       c = 2.718281828                           |           c = 2.718281828
+       prod = x * c                              |           prod = x * c
     """
-    if isinstance(c, torch.Tensor):
-        if prod(c.shape) != 1:
-            raise ValueError("Argument 'c': c.shape={} | Es koennen nur torch.Tensor Objekte mit genau einem Eintrag "
-                             "skalarmultipliziert werden.".format(c.shape))
-    if type(c) not in [int, float, torch.Tensor]:
-        raise TypeError("Argument 'c': type(c)={} | c ist weder int, float noch ein torch.Tensor.".format(type(c)))
 
-    # Kopiere Blattmatrixdict und Transfertensordict sowie dtree von self
-    U, B, dtree = deepcopy(self.U), deepcopy(self.B), deepcopy(self.dtree)
-    # Multiplizierre den Transfertensor der Wurzel mit dem Skalar
-    B[dtree.get_root()] = B[dtree.get_root()] * c
+    if not isinstance(c, float):
+        raise TypeError("Argument 'c': type(c)={} | c ist kein float".format(type(c)))
 
-    return type(self)(U=U, B=B, dtree=dtree)
+    # Erzeuge Kopie
+    x = deepcopy(self)
+
+    # Multipliziere den Transfertensor der Wurzel mit dem Skalar
+    x.B[x.dtree.get_root()] = x.B[x.dtree.get_root()] * c
+    # Setze is_orthog Flag auf False
+    x.is_orthog = False
+    return x

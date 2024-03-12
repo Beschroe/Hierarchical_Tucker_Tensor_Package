@@ -6,7 +6,7 @@ setup(
     description='An implementation of the hierarchical Tuckerformat for tensors',
     author='Benedikt Schroeter',
     author_email='b.schroeter@em.uni-frankfurt.de',
-    packages=['HTucker', 'dimtree'],
+    packages=['HTucker'],
     install_requires=[
         'numpy',
         'torch',

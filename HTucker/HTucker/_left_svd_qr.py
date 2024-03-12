@@ -1,9 +1,17 @@
 import torch
 
-def left_svd_qr(x):
+def left_svd_qr(x: torch.Tensor):
     """
-    Berechnet die linken Singulaervektoren samt zugehoeriger Singulaerwerte der Matrix x.
-    :param x: torch.Tensor
+    Berechnet die linken Singulaervektoren samt Singulaerwerte der Matrix 'x'.
+    ______________________________________________________________________
+    Parameter:
+    x 2D torch.Tensor
+    ______________________________________________________________________
+    Output:
+    (2D torch.Tensor, 1D torch.Tensor): Der erste Eintrag entspricht den linken Singulaervektoren, waehred der zweite
+                                        Eintrag den zugehoerigen Singulaerwerten entspricht. Das Tupel ist bezogen
+                                        auf die Singulaerwerte in absteigender Reihenfolge sortiert.
+
     """
     if not isinstance(x, torch.Tensor):
         raise TypeError("Argument 'x': type(x)={} | x ist kein torch.Tensor.".format(type(x)))

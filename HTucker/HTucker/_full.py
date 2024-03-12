@@ -2,9 +2,22 @@ import torch
 
 def full(self):
     """
-    Gibt den vollen Tensor zurueck.
-    :return: torch.Tensor
+    Berechnet den durch 'self' repraesentierten vollen Tensor.
+    ______________________________________________________________________
+    Output:
+    (torch.Tensor,): Der volle Tensor.
+    ______________________________________________________________________
+    Beispiel:
+    a)
+    x = HTTensor.randn((3,4,5,6))
+    x_full = x.full()
+    type(x_full)    # = torch.Tensor
+    b)
+    x = HTTensor.truncate(torch.randn(5,6,7,8))
+    x_full = x.full()
+    type(x_full)    # = torch.Tensor
     """
+
     # Wiederherstellung der Basen der Matrizierungen
     U = {}
     for level in range(self.dtree.get_depth(), -1, -1):

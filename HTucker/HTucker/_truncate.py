@@ -1,22 +1,48 @@
 import torch
-from dimtree.dimtree import dimtree
+from .dimtree import dimtree
 from math import sqrt
 
-def truncate(cls, x, opts=None):
+def truncate(cls, x: torch.Tensor, opts: dict=None):
         """
-        Ueberfuehrt den vollen Tensor x in das hierarchische Tuckerformat. Dazu muss x mindestens von Ordnung 2 sein.
-        Das Argument opts enthaelt die hierbei einzuhaltenden Constraints.
-        opts enthaelt folgende Optionen:
+        Berechnet das hierarchische Tuckerformat des vollen Tensors 'x'. Ist 'opts' None, so wird eine exakte Darstellung
+        von 'x' im hierarchischen Tuckerformat berechnet. Ansonsten wird lediglich eine Approximation, die den in
+        'opts' hinterlegten Constraints genuegt, berechnet.
+        ______________________________________________________________________
+        Parameter:
+        - x torch.Tensor: Der torch.Tensor dessen hierarchisches Tuckerformat berechnet wird
+        - opts dict: Enthaelt mindestens eine der folgenden Optionen:
                                             - "max_rank": positiver integer | Legt den maximalen hierarchischen Rang
                                                           fest
                                             - "err_tol_abs": positiver float | Legt die einzuhaltende absolute
                                                              Fehlertoleranz fest
                                             - "err_tol_rel": positiver float | Left die einzuhaltende relative
                                                              Fehlertoleranz fest
-        :param x: torch.Tensor
-        :param opts: dict
-        :return: HTucker.HTucker
+        ______________________________________________________________________
+        Output:
+        (HTucker.HTTensor,): Das (ranggekuerzte) hierarchische Tuckerformat zu 'x'.
+        ______________________________________________________________________
+        Beispiel:
+        a)
+        x = torch.randn(3,4,5,6)
+        xh = HTTensor.truncate(x)
+        type(xh)    # = HTucker.HTTensor
+        b)
+        x = torch.randn(10,17,3,4)
+        opts = {"err_tol_abs": 10.0}
+        xh = HTTensor.truncate(x, opts)
+        torch.linalg.norm(x-xh.full())    # < 10.0
+        c)
+        x = torch.randn(10,17,3,4)
+        opts = {"err_tol_rel": 0.01}
+        xh = HTTensor.truncate(x, opts)
+        torch.linalg.norm(x-xh.full())/torch.linalg.norm(x)    # < 0.01
+        d)
+        x = torch.randn(10,17,3,4)
+        opts = {"max_rank": 15, "err_tol_abs": 10.0}
+        xh = HTTensor.truncate(x, opts)
+        torch.linalg.norm(x-xh.full())    # ggf. > 10.0, da "max_rank" den maximalen hierarchischen Rang beschraenkt
         """
+
         # Argumentchecks: x
         if not isinstance(x, torch.Tensor):
             raise TypeError("Argument 'x': type(x)={} | x ist kein torch.Tensor.".format(type(x)))
@@ -24,7 +50,7 @@ def truncate(cls, x, opts=None):
             raise ValueError("Argument 'x': x.shape={} | x ist kein Tensor von Ordnung 2 oder höher.".format(x.shape))
         # Argumentchecks: opts
         if opts is not None:
-            cls.check_opts(opts)
+            cls._check_opts(opts)
 
         # Anpassen der Fehlertoleranzen in opts
         # Soll global der Fehler e eingehalten werden, muss der Kuerzungsfehler pro Knoten
@@ -54,7 +80,7 @@ def truncate(cls, x, opts=None):
             U[t], sv = cls.left_svd_qr(x_as_matrix)#,_ = torch.linalg.svd(x_as_matrix, full_matrices=False)# cls.left_svd_qr(...)
             if opts:
                 # Rangkuerzung
-                U[t] = U[t][:, :cls.get_truncation_rank(sv, opts)]
+                U[t] = U[t][:, :cls._get_truncation_rank(sv, opts)]
             # Aktualisierung des rank dicts
             rank[t] = U[t].shape[1]
             # Aktualisierung des Kerntensors C
@@ -80,7 +106,7 @@ def truncate(cls, x, opts=None):
                     B[t], sv = cls.left_svd_qr(C_as_matrix)#, _ = torch.linalg.svd(C_as_matrix, full_matrices=False) # cls.left_svd_qr(...)
                     if opts:
                         # Rangkuerzung
-                        B[t] = B[t][:, :cls.get_truncation_rank(sv, opts)]
+                        B[t] = B[t][:, :cls._get_truncation_rank(sv, opts)]
                     # Aktualisierung des rank dicts
                     rank[t] = B[t].shape[1]
                     # Aktualisierung des Kerntensors

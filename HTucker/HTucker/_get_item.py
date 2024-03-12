@@ -1,12 +1,37 @@
-import torch
 from copy import deepcopy
 
 
-def get(self, key):
+def get(self, key: int | slice | tuple):
     """
-    Gibt das Element bzw. die Elemente, das/die durch key referenziert werden, zurueck.
-    @param key: tuple, slice oder int
-    @return: float oder HTucker.HTucker
+    Gibt den durch key bestimmten Eintrag des hierarchischen Tuckertensors 'self' zurueck.
+    Das Slicing Verhalten ist hierbei analog zu dem von pytorch.
+    ______________________________________________________________________
+    Parameter:
+    - key int | slice | tuple: Der Index bzw. Slice
+    ______________________________________________________________________
+    Output:
+    (float | HTucker.HTTensor, ): Das referenzierte Element bzw. der geslicete hierarchische Tuckertensor
+    ______________________________________________________________________
+    Beispiel:
+                 HTucker.HTTensor              <~~~>            torch.Tensor
+    a) int
+       x = HTTensor.randn((3,4,5,6))             |           x = torch.randn(3,4,5,6)
+       x = x[0]                                  |           x = x[0]
+       type(x)    # HTucker.HTTensor             |           type(x)    # torch.Tensor
+       x.get_shape()    # (4,5,6)                |           x.shape    # torch.size([4,5,6])
+
+
+    a) slice
+       x = HTTensor.randn((3,4,5,6))             |           x = torch.randn(3,4,5,6)
+       x = x[0,:,1,:]                            |           x = x[0,:,1,:]
+       type(x)    # HTucker.HTTensor             |           type(x)    # torch.Tensor
+       x.get_shape()    # (4,6)                  |           x.shape    # torch.size([4,6])
+
+    a) tuple
+       x = HTTensor.randn((3,4,5,6))             |           x = torch.randn(3,4,5,6)
+       x = x[2,1,0,4]                            |           x = x[2,1,0,4]
+       type(x)    # float                        |           type(x)    # torch.Tensor
+                                                 |           x.shape    # torch.size([])
     """
     if isinstance(key, int):
         return get_from_int(self, key)

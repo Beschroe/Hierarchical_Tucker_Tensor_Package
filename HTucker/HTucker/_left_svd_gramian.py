@@ -1,12 +1,19 @@
 import torch
 
 
-def left_svd_gramian(x):
+def left_svd_gramian(x: torch.Tensor):
     """
-    Unter der Annahme, dass x eine reduzierte Gram'sche Matrix der Form x = v.T @ v ist, werden die linken
-    Singulaervektoren und Singulaerwerte in absteigender Reihenfolge zurueckgegeben.
-    :param x: torch.tensor
-    :return: 2D-torch.tensor, 1D-torch.tensor
+    Berechnet die linken Singulaervektoren samt Singulaerwerte der Matrix 'x' und gibt diese absteigend sortiert
+    zurueck.
+    Die Berechnungen beruhen auf der Annahme, dass 'x' eine reduzierte Gram'sche Matrix der Form x = v.T @ v ist.
+    ______________________________________________________________________
+    Parameter:
+    - x 2D torch.Tensor
+    ______________________________________________________________________
+    Output:
+    (2D torch.Tensor, 1D torch.Tensor): Der erste Eintrag entspricht den linken Singulaervektoren, waehred der zweite
+                                        Eintrag den zugehoerigen Singulaerwerten entspricht. Das Tupel ist bezogen
+                                        auf die Singulaerwerte in absteigender Reihenfolge sortiert.
     """
     # Spektralzerlegung
     eig_val, Q = torch.linalg.eigh(x)

@@ -1,59 +1,69 @@
 import torch
+from copy import deepcopy
 from math import sqrt
 
 
-def truncate_htt(self, opts):
+def truncate_htt(self, opts: dict):
     """
-    Kuerzt den hierarchischen Tuckertensor self auf einen niedrigeren hierarchischen Rang. Das Argument opts enthaelt
-    die hierbei einzuhaltenden Constraints.
-    opts enthaelt folgende Optionen:
+    Fuehrt eine Rangkuerzung auf dem hierarchischen Tuckertensor 'self' durch. Die dabei einzuhaltenden Constraints
+    finden sich im Parameter 'opts'.
+    ______________________________________________________________________
+    Parameter:
+    - opts dict: Enthaelt mindestens eine der folgenden Optionen:
                                     - "max_rank": positiver integer | Legt den maximalen hierarchischen Rang
                                                   fest
                                     - "err_tol_abs": positiver float | Legt die einzuhaltende absolute
                                                      Fehlertoleranz fest
                                     - "err_tol_rel": positiver float | Left die einzuhaltende relative
                                                      Fehlertoleranz fest
-    :param self: HTucker.HTucker
-    :param opts: dict
-    :return: HTucker.HTucker
+    ______________________________________________________________________
+    Output:
+    None
+    ______________________________________________________________________
+    Beispiel:
+    x = torch.randn(10,10,10,10)
+    xh = HTTensor.truncate(x)
+    xh.get_rank()    # = {(0, 1, 2, 3): 1, (0,): 10, (1,): 10, (2,): 10, (3,): 10, (0, 1): 100, (2, 3): 100}
+    opts = {"max_rank": 25, "err_tol_abs": 10.0}
+    xh.truncate_htt(opts)
+    xh.get_rank()    # = {(0, 1, 2, 3): 1, (0,): 10, (1,): 10, (2,): 10, (3,): 10, (0, 1): 25, (2, 3): 25}
     """
+
     # Anpassen der Fehlertoleranzen in opts
     # Soll global der Fehler e eingehalten werden, muss der Kuerzungsfehler pro Knoten
     # kleiner gleich e / sqrt((Tensorordnung * 2 - 2)) bleiben
     opts = {k: (v/sqrt(self.get_order()*2-2) if k in ["err_tol_abs", "err_tol_rel"]
                 else v) for k, v in opts.items()}
 
-    # Orthogonalisiere self, falls notwendig
-    if not self.is_orthog:
-        self.orthogonalize()
-
     # Fuer bessere Lesbarkeit
-    U = self.U
-    B = self.B
-    dtree = self.dtree
+    x = self
+
+    # Orthogonalisiere self, falls notwendig
+    if not x.is_orthog:
+        x.orthogonalize()
 
     # Berechne die reduzierten Gram'schen Matrizen
-    G = self.get_gramians()
+    G = x._get_gramians()
 
     # Iteriere durch den Dimensionsbaum bottom up
-    for level in range(dtree.get_depth(), 0, -1):
-        for node in dtree.get_nodes_of_lvl(level):
+    for level in range(x.dtree.get_depth(), 0, -1):
+        for node in x.dtree.get_nodes_of_lvl(level):
             # Berechne linke Singulaervektoren
-            Q, sv = self.left_svd_gramian(G[node])
-            rank = self.get_truncation_rank(sv, opts)
+            Q, sv = x.left_svd_gramian(G[node])
+            rank = x._get_truncation_rank(sv, opts)
             Q = Q[:, :rank]
-            if dtree.is_leaf(node):
+            if x.dtree.is_leaf(node):
                 # Kuerze Blattmatrix durch Multiplikation mit Q
-                U[node] = U[node] @ Q
+                x.U[node] = x.U[node] @ Q
             else:
-                B[node] = torch.tensordot(B[node], Q, dims=([2], [0]))
+                x.B[node] = torch.tensordot(x.B[node], Q, dims=([2], [0]))
             # Update Transfertensor des Elternknotens
-            par = dtree.get_parent(node)
-            if dtree.is_left(node):
-                B[par] = torch.tensordot(Q.T, B[par], dims=([1], [0]))
+            par = x.dtree.get_parent(node)
+            if x.dtree.is_left(node):
+                x.B[par] = torch.tensordot(Q.T, x.B[par], dims=([1], [0]))
             else:
-                B[par] = torch.tensordot(Q.T, B[par], dims=([1], [1]))
-                B[par] = torch.movedim(B[par], source=0, destination=1)
+                x.B[par] = torch.tensordot(Q.T, x.B[par], dims=([1], [1]))
+                x.B[par] = torch.movedim(x.B[par], source=0, destination=1)
 
-    # Gebe gekuerzten HTucker Tensor zurueck
-    return self
+    # Setze is_orthog Flag auf False
+    x.is_orthog = False
