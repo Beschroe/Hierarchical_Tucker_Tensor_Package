@@ -31,7 +31,7 @@ class HTTensor:
     truncate = classmethod(truncate)
     _get_truncation_rank = classmethod(_get_truncation_rank)
     truncate_sum = classmethod(truncate_sum)
-    get_gramians_sum = classmethod(_get_gramians_sum)
+    _get_gramians_sum = classmethod(_get_gramians_sum)
     randn = classmethod(randn)
 
     # Importierte statische Methoden
