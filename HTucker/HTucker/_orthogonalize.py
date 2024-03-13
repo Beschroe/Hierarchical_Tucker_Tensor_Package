@@ -48,7 +48,7 @@ def orthogonalize(self):
                 # Der Transfertensor der Wurzel muss nicht mehr orthogonalisiert werden
                 # Daher wird dieser Abschnitt nur dann durchgefuehrt, falls node ungleich der Wurzel ist
                 # Berechne also die QR Zerlegung der Matrizierung des geupdateten Transfertensors
-                x.B[node], R[node] = torch.linalg.qr(self.matricise(x.B[node], t=(0, 1)), mode="complete")
+                x.B[node], R[node] = torch.linalg.qr(self.matricise(x.B[node], t=(0, 1)), mode="reduced")
                 # Dematriziere den orthogonalisierten Transfertensor wieder zu 3D
                 x.B[node] = self.dematricise(x.B[node],
                                                       shape=(R[l].shape[0], R[r].shape[0], x.B[node].shape[1]), t=(0, 1))
