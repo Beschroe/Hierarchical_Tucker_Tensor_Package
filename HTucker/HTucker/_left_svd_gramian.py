@@ -16,7 +16,7 @@ def left_svd_gramian(x: torch.Tensor):
                                         auf die Singulaerwerte in absteigender Reihenfolge sortiert.
     """
     # Spektralzerlegung
-    Q, eig_val, _ = torch.linalg.svd(x, full_matrices=False)
+    Q, eig_val, _ = torch.linalg.svd((x+x)/2, full_matrices=False)
     # Singulaerwerte entsprechen den Quadratwurzeln der Eigenwertbetraege
     s_val = torch.sqrt(torch.abs(eig_val))
     # Index zur absteigenden Sortierung der Singulaerwerte
