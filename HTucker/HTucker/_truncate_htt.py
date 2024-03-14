@@ -32,7 +32,7 @@ def truncate_htt(self, opts: dict):
     # Anpassen der Fehlertoleranzen in opts
     # Soll global der Fehler e eingehalten werden, muss der Kuerzungsfehler pro Knoten
     # kleiner gleich e / sqrt((Tensorordnung * 2 - 2)) bleiben
-    opts = {k: (v/sqrt(self.get_order()*2-2) if k in ["err_tol_abs", "err_tol_rel"]
+    opts = {k: (v/sqrt(self.get_order()*2-3) if k in ["err_tol_abs", "err_tol_rel"]
                 else v) for k, v in opts.items()}
 
     # Fuer bessere Lesbarkeit
