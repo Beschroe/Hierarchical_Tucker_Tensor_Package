@@ -1,5 +1,5 @@
 import torch
-
+from copy import deepcopy
 
 def ele_mode_mul(self, v: torch.Tensor, dim: int):
     """
@@ -39,7 +39,7 @@ def ele_mode_mul(self, v: torch.Tensor, dim: int):
                          " passen nicht zusammen.".format(v.shape, dim, self.get_shape()))
 
     # Aus Gruenden der Lesbarkeit
-    x = self
+    x = deepcopy(self)
 
     # Multipliziere A elementweise mit der Blattmatrix des Knotens, der die Dimension dim repraesentiert
     node = (dim,)
