@@ -29,9 +29,9 @@ def _get_truncation_rank(cls, sv: torch.Tensor, opts: dict):
         raise TypeError("Argument 'sv': sv ist ein {}D-torch.Tensor,"
                         " waehrend ein 1D-torch.Tensor gefordert ist.".format(len(sv.shape)))
     cls._check_opts(opts)
-    atol = opts["err_tol_abs"]
-    rtol = opts["err_tol_rel"]
-    max_rank = opts["max_rank"]
+    atol = opts["err_tol_abs"] if "err_tol_abs" in opts else None
+    rtol = opts["err_tol_rel"] if "err_tol_rel" in opts else None
+    max_rank = opts["max_rank"] if "max_rank" in opts else None
     # compute cumsum
     cum_sv = torch.cat([torch.sqrt(torch.cumsum(sv.flip(dims=(0,))**2,dim=0)).flip(dims=(0,)), torch.zeros(1)])
     # compute rank_a
