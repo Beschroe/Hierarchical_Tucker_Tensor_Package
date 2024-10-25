@@ -1,4 +1,5 @@
 import torch
+from warnings import warn
 
 
 def _get_truncation_rank(cls, sv: torch.Tensor, opts: dict):
@@ -19,25 +20,34 @@ def _get_truncation_rank(cls, sv: torch.Tensor, opts: dict):
                                                      Fehlertoleranz fest
     ______________________________________________________________________
     Output:
-    (int,): Der berechnete hierarchische Rang
+    1D-torch.Tensor: Der berechnete hierarchische Rang
     ______________________________________________________________________
     """
     if not isinstance(sv, torch.Tensor):
-        raise TypeError("Argument 'sv': type(sv)={} | sv ist kein np.ndarray.".format(type(sv)))
+        raise TypeError("Argument 'sv': type(sv)={} | sv ist kein torch.Tensor.".format(type(sv)))
     if len(sv.shape) != 1:
-        raise TypeError("Argument 'sv': sv ist ein {}D-np.ndarray,"
-                        " waehrend ein 1D-np.ndarray gefordert ist.".format(len(sv.shape)))
+        raise TypeError("Argument 'sv': sv ist ein {}D-torch.Tensor,"
+                        " waehrend ein 1D-torch.Tensor gefordert ist.".format(len(sv.shape)))
     cls._check_opts(opts)
-    # Werden die ersten k Singulaervektoren mitgenommen, ist der Fehler in Frobeniusnurm durch sv_sum[k] gegeben
-    sv_sum = torch.hstack((torch.sqrt(torch.cumsum((sv ** 2).flip(0), 0)).flip(0), torch.zeros(1)))
-    rank_err_tol_abs = 1
-    rank_err_tol_rel = 1
-    if "err_tol_abs" in opts.keys():
-        rank_err_tol_abs = max(int((sv_sum < opts["err_tol_abs"]).nonzero()[0]), 1)
-    if "err_tol_rel" in opts.keys():
-        rank_err_tol_rel = max(int((sv_sum < opts["err_tol_rel"] * torch.linalg.norm(sv)).nonzero()[0]), 1)
-    truncation_rank = max(rank_err_tol_abs, rank_err_tol_rel)
-    if "max_rank" in opts.keys():
-        truncation_rank = min(truncation_rank, opts["max_rank"])
-    return truncation_rank
+    atol = opts["err_tol_abs"] if "err_tol_abs" in opts else None
+    rtol = opts["err_tol_rel"] if "err_tol_rel" in opts else None
+    max_rank = opts["max_rank"] if "max_rank" in opts else None
+    # compute cumsum
+    cum_sv = torch.cat([torch.sqrt(torch.cumsum(sv.flip(dims=(0,))**2,dim=0)).flip(dims=(0,)), torch.zeros(1)])
+    # compute rank_a
+    if atol:
+        rank_a = torch.max((cum_sv <= atol).nonzero()[0,0], torch.tensor(1))
+    else:
+        rank_a = torch.tensor(1)
+    # compute rank_r
+    if rtol:
+        rank_r = torch.max((cum_sv <= rtol*torch.linalg.norm(sv.type(torch.float))).nonzero()[0,0], torch.tensor(1))
+    else:
+        rank_r = torch.tensor(1)
+    rank = torch.max(rank_r, rank_a)
+    if max_rank:
+        if rank > max_rank:
+            warn("Requested greater truncation rank than allowed -> Error boundary potentially broken.")
+            rank = max_rank
+    return rank
 
